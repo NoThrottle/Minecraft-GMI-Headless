@@ -23,7 +23,7 @@ import net.harawata.appdirs.AppDirsFactory;
 
 public class installgmi {
 	
-	public static int ConfigVersion = 1;
+	public static int PropertiesVersion = 1;
 	public static int ThisGMIHeadless = 2;
 	public static String ThisGMIVersionReadable = "2.0.0"; //Different for Headless and GMI but same description in file.
 	
@@ -48,7 +48,7 @@ public class installgmi {
 				
 		System.out.println("Setting Up");
 		ParseLocalConfig();
-		GetOnlineConfig();
+		GetOnlineProperties();
 		GetOnlineModList();
 		System.out.println("Done!");
 			
@@ -117,7 +117,7 @@ public class installgmi {
         return;
 	}
 	
-	private static void GetOnlineConfig() {
+	private static void GetOnlineProperties() {
 		HttpRequest http = new HttpRequest();
 		try {
 			String response = http.Request(SheetID, PropertiesRange, APIKey);	
@@ -126,8 +126,9 @@ public class installgmi {
 	        Object[] arrayed = model.getValues().toArray();    
 	        findvalue(arrayed, "");
 	        
-		} catch (IOException e) {
+		} catch (IOException | NullPointerException e) {
 			e.printStackTrace();
+			System.out.println("You either have no internet OR you need to update a new version of GMI");
 			System.exit(0);
 		}
 		
@@ -159,11 +160,17 @@ public class installgmi {
         		
         	} else {
         		
-            	if (astray[0].contains("Config Version")) {
-            		if (Integer.parseInt(astray[1].trim()) != ConfigVersion) {
+            	if (astray[0].contains("Properties Version")) {
+            		if (Integer.parseInt(astray[1].trim()) != PropertiesVersion) {
             			NeedGMIUpdates = true;
             		}
             	}
+        		else
+        		{
+        			System.out.println("Something Went Wrong. Contact an Admin to fix this issue: SERVERPROPERTIES_UNREADABLE");
+        			System.exit(404);
+        		}
+            	
                	if (astray[0].contains("Latest GMI Headless")) {
                		if (Integer.parseInt(astray[1].trim()) != ThisGMIHeadless) {
             			GMIHasUpdates = true;
@@ -188,10 +195,10 @@ public class installgmi {
 		AppDirs appDirs = AppDirsFactory.getInstance();
 		Path path = Paths.get(appDirs.getUserDataDir(".gmi", null, null, true));
 		
-        File file = new File(path.toAbsolutePath()+ "/gmi-headless.properties");
+        File file = new File(path.toAbsolutePath()+ "/gmi.properties");
         if (file.exists()) {
             try {
-                FileInputStream inputStream = new FileInputStream("config/antispeedrun.properties");
+                FileInputStream inputStream = new FileInputStream(file);
                 Properties props = new Properties();
                 props.load(inputStream);
                 if (props.containsKey("local_modpack_version")) {

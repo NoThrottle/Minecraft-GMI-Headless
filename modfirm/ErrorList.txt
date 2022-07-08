@@ -1,3 +1,0 @@
-1 - Unable to Fetch location of Mods Folder
-	A - 
-23 - Unable to fetch version

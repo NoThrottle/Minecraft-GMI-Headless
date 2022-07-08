@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="D:/Downloads/progressbar-0.9.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/gson-2.8.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/jline-terminal-3.21.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/jna-5.10.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/jna-platform-5.10.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/kotlin-stdlib-1.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/okhttp-4.9.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/okio-2.8.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="C:/Users/NoThrottle/git/repository/GMI-Headless/appdirs-1.2.1.jar"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

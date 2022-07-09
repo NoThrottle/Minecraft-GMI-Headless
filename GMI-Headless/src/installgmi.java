@@ -29,17 +29,22 @@ public class installgmi {
 	
 	public static String SheetID = "";
 	public static String APIKey = "";
-	public static String PropertiesRange = "ModsProperties!A1:B14"; //must be changed every config version
+	public static String PropertiesRange = "ModsProperties!A1:B16"; //must be changed every config version
 	public static String ModListRange = "ModsList!D1:G"; //need last item row number to end of string
 		
 	public static boolean NeedGMIUpdates = false;
 	public static boolean GMIHasUpdates = false;
 	public static boolean NeedModUpdates = false;
+	public static boolean NeedFabricLoader = false;
 
 	private static int LOCAL_MODPACK_VERSION;
+	private static String LOCAL_FABRICLOADER_VERSION;
 	private static long UNIX_lAST_OPEN;
-	private static int LAST_ITEM_ROW_NUMBER;
 	
+	private static int LAST_ITEM_ROW_NUMBER;
+	private static String SP_FABRICLOADER_VERSION; //SP = Server Properties
+	private static String SP_FABRICLOADER_LINK;
+	private static String SP_HEADLESS_LINK;
 	private static String JSON_RESPONSE;
 	
 	private static ArrayList<String> modlist = new ArrayList<String>();
@@ -50,9 +55,10 @@ public class installgmi {
 		ParseLocalConfig();
 		GetOnlineProperties();
 		GetOnlineModList();
+		CheckForFabric();
 		System.out.println("Done!");
 			
-		System.out.println("GMI" + ThisGMIVersionReadable + "for HighskyMC Modpack running in Headless mode");
+		System.out.println("GMI-" + ThisGMIVersionReadable + " for HighskyMC Modpack running in Headless mode");
 		
 		DoChecks();	
 		
@@ -154,37 +160,42 @@ public class installgmi {
         	
         	if (find != "") {
         		
-            	if (astray[0].contains(find)) {
+            	if (astray[0].equals(find)) {
             		return astray[1];
             	}
         		
         	} else {
         		
-            	if (astray[0].contains("Properties Version")) {
+            	if (astray[0].equals("Properties Version")) {
             		if (Integer.parseInt(astray[1].trim()) != PropertiesVersion) {
             			NeedGMIUpdates = true;
             		}
             	}
-        		else
-        		{
-        			System.out.println("Something Went Wrong. Contact an Admin to fix this issue: SERVERPROPERTIES_UNREADABLE");
-        			System.exit(404);
-        		}
             	
-               	if (astray[0].contains("Latest GMI Headless")) {
+               	if (astray[0].equals("Latest GMI Headless")) {
                		if (Integer.parseInt(astray[1].trim()) != ThisGMIHeadless) {
             			GMIHasUpdates = true;
             		}
                	}
-               	if (astray[0].contains("Latest Client Modpack Version")) {
+               	if (astray[0].equals("Latest Client Modpack Version")) {
                		if (Integer.parseInt(astray[1].trim()) != LOCAL_MODPACK_VERSION) {
             			NeedModUpdates = true;
             		}
                	}
-               	if (astray[0].contains("Last Item Row Number")) {
+               	if (astray[0].equals("Last Item Row Number")) {
                		LAST_ITEM_ROW_NUMBER = Integer.parseInt(astray[1].trim());
                	}
-        	}       	
+               	if (astray[0].equals("Fabric Loader Version")) {
+               		
+               		SP_FABRICLOADER_VERSION = astray[1];
+               	}
+               	if (astray[0].equals("Fabric Loader Link")) {
+               		SP_FABRICLOADER_LINK = astray[1];
+               	}
+               	if (astray[0].equals("DL Link GMI Headless")) {
+               		SP_HEADLESS_LINK = astray[1];
+               	}
+           	} 	
         }		
         
 		return "";
@@ -218,7 +229,8 @@ public class installgmi {
 	private static void DoChecks() {
 		
 		if (NeedGMIUpdates) {
-			System.out.println("There is a new version of GMI that is needed to go further. Go to the discord server, #server-updates to get the new version.");
+			System.out.println("There is a new version of GMI that is needed to go further. Downloading it now.");
+			HandleGMIDL();
 		}
 		
 		if (GMIHasUpdates && !NeedGMIUpdates) {
@@ -370,6 +382,102 @@ public class installgmi {
 	
 	//////////////////////////////////////
    
+	public static void CheckForFabric() {
+		
+		File file = new File(GetClientModPath(".mc").toString(), "versions");
+		ArrayList<String> UnsupportedFabricVersions = new ArrayList<String>();
+		boolean foundit = false;
+		
+		if (file.isDirectory()) {
+			File[] directories = file.listFiles(File::isDirectory);
+			
+			for (File dir : directories) {
+				
+				if (dir.getName().contains("fabric")) {
+					if (dir.getName().contains(SP_FABRICLOADER_VERSION.trim())) {
+						foundit = true;
+						return;
+					}
+					else
+					{
+						UnsupportedFabricVersions.add(dir.getName());
+					}
+				}
+			}
+		}
+		
+		if (foundit) {
+			return;
+		}
+		else {
+			if (UnsupportedFabricVersions.size() != 0) {
+				System.out.println("You have fabric versions: " + String.join("; ", UnsupportedFabricVersions));
+				System.out.println("However you don't have the required fabric version: " + SP_FABRICLOADER_VERSION);
+				System.out.println("Proceeding to Fabric Installation");
+				
+			}
+			else {
+				System.out.println("You do not have fabric installed. Proceeding to Fabric Installation");			
+			}
+			
+			HandleFabricLoaderDL();
+			return;
+		}
+		
+	}
+	
+	public static void HandleFabricLoaderDL() {
+		try {
+			downloadUsingNIO(SP_FABRICLOADER_LINK, new File(System.getProperty("java.io.tmpdir"), "fabric.jar").getPath());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		executeJAR(new File(System.getProperty("java.io.tmpdir"), "fabric.jar").getPath());
+		CheckForFabric();
+	}
+	
+	public static void HandleGMIDL() {
+		
+		boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+		
+		try {
+			downloadUsingNIO(SP_HEADLESS_LINK, new File(System.getProperty("java.io.tmpdir"), "gmi.jar").getPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			if (isWindows) {
+				Runtime.getRuntime().exec("cmd.exe /C start java" + " -jar " + new File(System.getProperty("java.io.tmpdir"), "gmi.jar").getPath());
+			}else {
+				Runtime.getRuntime().exec("sh -c open java" + " -jar " + new File(System.getProperty("java.io.tmpdir"), "gmi.jar").getPath());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.exit(0);
+		
+	}
+	
+    public static void executeJAR(String Jar) {
+
+        Process pb;
+		try {
+			pb = Runtime.getRuntime().exec("java" + " -jar " + Jar);
+			pb.waitFor();   
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Something went wrong. Error: EXECUTEJAR_FAILED");
+			System.exit(404);
+		}
+
+    }
+
+	
 	public static Path GetClientModPath(String what) {
 		
 		AppDirs appDirs = AppDirsFactory.getInstance();
